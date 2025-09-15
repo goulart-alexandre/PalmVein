@@ -86,6 +86,13 @@
             android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:text="clear collect" />
+
+        <Button
+            android:id="@+id/btn_register"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="Cadastrar" />
     </LinearLayout>
 
     <TextView
@@ -99,6 +106,51 @@
         android:paddingEnd="20dp"
         android:textColor="#000000"
         android:textSize="28sp" />
+
+    <LinearLayout
+        android:id="@+id/ll_user_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/txt_operate_result"
+        android:layout_marginTop="20dp"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#f0f0f0"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Usuário Reconhecido:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/txt_user_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nome: -"
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/txt_user_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ID: -"
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/txt_user_created"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cadastrado em: -"
+            android:textSize="14sp"
+            android:textColor="#666666" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/txt_device_key"

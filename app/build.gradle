@@ -75,6 +75,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
 
     implementation files('libs/HFPalmSdk-v2.1.7-20250807.aar')
+    implementation files('libs/q-zhenglib.aar')
 
     // greendao
     implementation 'org.greenrobot:greendao:3.3.0'

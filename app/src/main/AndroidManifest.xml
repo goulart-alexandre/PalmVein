@@ -25,6 +25,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.hfims.android.lib.palm.RegisterActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -3,6 +3,8 @@ package com.hfims.android.lib.palm;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
@@ -14,6 +16,8 @@ import android.widget.Toast;
 import com.hfims.android.core.util.ThreadUtils;
 import com.hfims.android.lib.palm.model.PalmCamera;
 import com.hfims.android.lib.palm.model.PalmTrack;
+import com.hfims.android.lib.palm.model.User;
+import com.hfims.android.lib.palm.dao.UserDao;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.XXPermissions;
 import com.hjq.permissions.Permission;
@@ -25,10 +29,17 @@ import com.hfims.android.lib.palm.PalmConfig;
 import com.hfims.android.lib.palm.IPalmSdk;
 import com.hfims.android.lib.palm.PalmConst;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+// Import do SDK de hardware
+import com.q_zheng.QZhengGPIOManager;
 
 // ButterKnife removido - usando ViewBinding
 
@@ -39,6 +50,9 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     private TextureView mTextureView;
     private int mCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
     private ActivityMainBinding binding;
+    private UserDao userDao;
+    private QZhengGPIOManager gpioManager;
+    private Handler ledHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        userDao = new UserDao(this);
+        gpioManager = QZhengGPIOManager.getInstance(this);
         setupClickListeners();
         checkPermission();
     }
@@ -54,6 +70,11 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     protected void onResume() {
         super.onResume();
         initCamera();
+        // Recarregar usuários do banco SQLite para o SDK quando voltar de outras telas
+        if (PalmSdk.getInstance() != null) {
+            loadUsersToSdk();
+            startRecognize();
+        }
     }
 
     @Override
@@ -66,7 +87,24 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     protected void onDestroy() {
         super.onDestroy();
         releasePalmSdk();
+        resetAllLEDs(); // Resetar todos os LEDs ao destruir a activity
+        if (userDao != null) {
+            userDao.close();
+        }
         binding = null;
+    }
+
+    private void resetAllLEDs() {
+        try {
+            if (gpioManager != null) {
+                gpioManager.setValue(QZhengGPIOManager.GPIO_ID_LED_R, QZhengGPIOManager.GPIO_VALUE_LOW);
+                gpioManager.setValue(QZhengGPIOManager.GPIO_ID_LED_G, QZhengGPIOManager.GPIO_VALUE_LOW);
+                gpioManager.setValue(QZhengGPIOManager.GPIO_ID_LED_B, QZhengGPIOManager.GPIO_VALUE_LOW);
+                android.util.Log.d("PalmLED", "Todos os LEDs resetados");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("PalmLED", "Erro ao resetar LEDs: " + e.getMessage());
+        }
     }
 
     private void initData() {
@@ -90,8 +128,28 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
             } else {
                 PalmSdk.getInstance().addRecognizeCallback(recognizeCallback);
                 PalmSdk.getInstance().addCollectCallback(collectCallback);
+                // Carregar usuários existentes do banco SQLite para o banco do SDK
+                loadUsersToSdk();
             }
         });
+    }
+
+    private void loadUsersToSdk() {
+        // Limpar o banco do SDK primeiro para remover IDs conflitantes
+        PalmSdk.getInstance().getPalmLib().deleteAll();
+        
+        // Carregar todos os usuários do banco SQLite e adicionar ao banco do SDK
+        List<User> users = userDao.getAllUsers();
+        android.util.Log.d("PalmRecognition", "Carregando " + users.size() + " usuários do SQLite para o SDK");
+        
+        for (User user : users) {
+            if (user.getPalmFeature() != null && !user.getPalmFeature().isEmpty()) {
+                PalmSdk.getInstance().getPalmLib().addFeature(user.getUserId(), user.getPalmFeature());
+                android.util.Log.d("PalmRecognition", "Usuário carregado no SDK: " + user.getName() + " (ID: " + user.getUserId() + ")");
+            } else {
+                android.util.Log.d("PalmRecognition", "Usuário sem palma: " + user.getName() + " (ID: " + user.getUserId() + ")");
+            }
+        }
     }
 
     private void releasePalmSdk() {
@@ -126,6 +184,22 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
 
         binding.btnClearCollect.setOnClickListener(v -> {
             PalmSdk.getInstance().getPalmLib().deleteAll();
+        });
+
+        binding.btnRegister.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(MainActivity.this, RegisterActivity.class);
+            startActivity(intent);
+        });
+
+        // Botão de debug para verificar usuários no banco
+        binding.btnClearCollect.setOnClickListener(v -> {
+            // Mostrar usuários no banco de dados
+            List<User> users = userDao.getAllUsers();
+            android.util.Log.d("PalmDebug", "Usuários no banco SQLite: " + users.size());
+            for (User user : users) {
+                android.util.Log.d("PalmDebug", "Usuário: " + user.getName() + " (ID: " + user.getUserId() + ") - Palma: " + (user.getPalmFeature() != null ? "Sim" : "Não"));
+            }
+            Toast.makeText(this, "Usuários no banco: " + users.size(), Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -189,6 +263,43 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         binding.palmTrackView.setVisibility(View.GONE);
     }
 
+    private void showUserInfo(User user) {
+        binding.txtUserName.setText("Nome: " + user.getName());
+        binding.txtUserId.setText("ID: " + user.getUserId());
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        String dateStr = sdf.format(new Date(user.getCreatedAt()));
+        binding.txtUserCreated.setText("Cadastrado em: " + dateStr);
+        
+        binding.llUserInfo.setVisibility(View.VISIBLE);
+    }
+
+    private void hideUserInfo() {
+        binding.llUserInfo.setVisibility(View.GONE);
+    }
+
+    private void turnOnGreenLED() {
+        try {
+            if (gpioManager != null) {
+                gpioManager.setValue(QZhengGPIOManager.GPIO_ID_LED_G, QZhengGPIOManager.GPIO_VALUE_HIGH);
+                android.util.Log.d("PalmLED", "LED verde ligado via GPIO");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("PalmLED", "Erro ao ligar LED verde: " + e.getMessage());
+        }
+    }
+
+    private void turnOffLED() {
+        try {
+            if (gpioManager != null) {
+                gpioManager.setValue(QZhengGPIOManager.GPIO_ID_LED_G, QZhengGPIOManager.GPIO_VALUE_LOW);
+                android.util.Log.d("PalmLED", "LED verde desligado via GPIO");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("PalmLED", "Erro ao desligar LED verde: " + e.getMessage());
+        }
+    }
+
     private final IPalmSdk.CollectCallback collectCallback = new IPalmSdk.CollectCallback() {
 
         @Override
@@ -213,9 +324,11 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
 
         @Override
         public void onSuccess(String onceFeature, String feature, String palmId, Map<String, Object> map) {
-            // Collection successful
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, getString(R.string.activity_main_palm_collect_success), Toast.LENGTH_SHORT).show());
-            PalmSdk.getInstance().getPalmLib().addFeature("1111", feature);
+            // Collection successful - não salvar aqui, apenas mostrar mensagem
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, getString(R.string.activity_main_palm_collect_success), Toast.LENGTH_SHORT).show();
+                // Não salvar no SDK aqui - isso é feito apenas na tela de cadastro
+            });
         }
 
         @Override
@@ -266,7 +379,30 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         @Override
         public void onSuccess(String palmId, int score, Map<String, Object> map) {
             // Palm vein recognition successful
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, getString(R.string.activity_main_palm_recognition_success) + palmId, Toast.LENGTH_SHORT).show());
+            runOnUiThread(() -> {
+                android.util.Log.d("PalmRecognition", "Reconhecimento bem-sucedido! palmId: " + palmId + ", score: " + score);
+                
+                // Buscar usuário no banco de dados pelo userId (palmId é o userId que salvamos)
+                User recognizedUser = userDao.getUserById(palmId);
+                android.util.Log.d("PalmRecognition", "Usuário encontrado: " + (recognizedUser != null ? recognizedUser.getName() : "null"));
+                
+                  if (recognizedUser != null) {
+                      showUserInfo(recognizedUser);
+                      Toast.makeText(MainActivity.this, "Usuário reconhecido: " + recognizedUser.getName(), Toast.LENGTH_LONG).show();
+
+                      // Ligar LED verde quando reconhecer
+                      turnOnGreenLED();
+
+                      // Esconder informações do usuário após 3 segundos e desligar LED
+                      binding.llUserInfo.postDelayed(() -> {
+                          hideUserInfo();
+                          turnOffLED();
+                      }, 3000);
+                  } else {
+                    hideUserInfo();
+                    Toast.makeText(MainActivity.this, "Usuário não encontrado no banco de dados. palmId: " + palmId, Toast.LENGTH_LONG).show();
+                }
+            });
             binding.rlContainerCamera.postDelayed(() -> startRecognize(), 2000);
         }
 
