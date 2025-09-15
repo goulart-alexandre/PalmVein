@@ -30,6 +30,12 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
     private boolean isCollecting = false;
     private String collectedPalmFeature = null;
     private float currentDistance = 0f;
+    private int stableFrames = 0;
+    private static final int STABLE_FRAMES_THRESHOLD = 10; // ~10 ciclos antes de iniciar contagem
+    private android.os.CountDownTimer countdownTimer;
+    // Limiares de distância (ajustáveis conforme hardware)
+    private static final float MIN_DISTANCE_OK = 0.25f; // abaixo: muito perto
+    private static final float MAX_DISTANCE_OK = 0.55f; // acima: muito longe
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,26 +113,70 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
     }
 
     private void updateCollectQualityIndicator(float quality, float distance) {
-        int qualityPercent = (int) (quality * 100);
-        ((android.widget.ProgressBar) findViewById(R.id.progress_collect_quality)).setProgress(qualityPercent);
-        ((android.widget.TextView) findViewById(R.id.txt_collect_quality_percentage)).setText(qualityPercent + "%");
-        ((android.widget.TextView) findViewById(R.id.txt_collect_distance)).setText("Distância: " + String.format("%.1f", distance));
-        
-        // Mudar cor da barra baseada na qualidade
-        android.widget.ProgressBar progressBar = findViewById(R.id.progress_collect_quality);
-        if (qualityPercent >= 80) {
-            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFF4CAF50)); // Verde
-        } else if (qualityPercent >= 60) {
-            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFFF9800)); // Laranja
-        } else {
-            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFF44336)); // Vermelho
-        }
+        // UI de qualidade removida a pedido. Mantemos assinatura para não quebrar chamadas.
     }
 
     private void stopCollect() {
         PalmSdk.getInstance().stopCollect();
         isCollecting = false;
         finish();
+    }
+
+    private void startStabilityCountdownIfNeeded() {
+        if (countdownTimer != null) return;
+        android.widget.TextView countdownView = findViewById(R.id.txt_countdown);
+        if (countdownView == null) return;
+        countdownView.setVisibility(View.VISIBLE);
+        countdownTimer = new android.os.CountDownTimer(3000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                long seconds = millisUntilFinished / 1000L + 1; // mostrar 3,2,1
+                countdownView.setText(String.valueOf(seconds));
+            }
+
+            @Override
+            public void onFinish() {
+                countdownView.setText("");
+                countdownView.setVisibility(View.GONE);
+                countdownTimer = null;
+                // Coleta contínua vai concluir e chamar onSuccess
+            }
+        }.start();
+    }
+
+    private void cancelCountdownIfRunning() {
+        if (countdownTimer != null) {
+            countdownTimer.cancel();
+            countdownTimer = null;
+            android.widget.TextView countdownView = findViewById(R.id.txt_countdown);
+            if (countdownView != null) {
+                countdownView.setText("");
+                countdownView.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void updateStatusMessage() {
+        android.widget.TextView countdownView = findViewById(R.id.txt_countdown);
+        if (countdownView == null) return;
+        // Se contagem ativa, não sobrescrever números
+        if (countdownTimer != null) return;
+
+        String message;
+        if (currentDistance > 0f) {
+            if (currentDistance < MIN_DISTANCE_OK) {
+                message = "Afaste mais a mão";
+            } else if (currentDistance > MAX_DISTANCE_OK) {
+                message = "Aproxime mais a mão";
+            } else {
+                // Dentro da zona: foco em estabilidade
+                message = (stableFrames >= STABLE_FRAMES_THRESHOLD / 2) ? "Mantenha a mão parada" : "Posicione a mão";
+            }
+        } else {
+            message = "Posicione a mão";
+        }
+        countdownView.setText(message);
+        countdownView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -151,27 +201,34 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
     private final IPalmSdk.CollectCallback collectCallback = new IPalmSdk.CollectCallback() {
         @Override
         public void onPalmNull(int times, Map<String, Object> map) {
-            // Palm vein not recognized
+            // Palma não detectada: cancelar contagem e resetar estabilidade
+            runOnUiThread(() -> {
+                stableFrames = 0;
+                cancelCountdownIfRunning();
+                updateStatusMessage();
+            });
         }
 
         @Override
         public void onPalmIn(List<PalmTrack> palmTrackList, Map<String, Object> map) {
-            // Detected palm vein - atualizar indicador de qualidade
+            // Palma dentro do frame: considerar estável por recorrência
             runOnUiThread(() -> {
                 if (palmTrackList != null && !palmTrackList.isEmpty()) {
-                    // Calcular qualidade baseada no número de tracks e outros fatores
-                    float quality = Math.min(1.0f, palmTrackList.size() * 0.3f + 0.4f);
-                    updateCollectQualityIndicator(quality, currentDistance);
+                    stableFrames++;
+                    if (stableFrames >= STABLE_FRAMES_THRESHOLD) {
+                        startStabilityCountdownIfNeeded();
+                    }
+                    updateStatusMessage();
                 }
             });
         }
 
         @Override
         public void onDistance(float distance) {
-            // Atualizar distância
+            // Atualizar distância (opcional)
             runOnUiThread(() -> {
                 currentDistance = distance;
-                updateCollectQualityIndicator(0.5f, distance); // Qualidade padrão durante detecção
+                updateStatusMessage();
             });
         }
 
@@ -206,20 +263,16 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
 
         @Override
         public void onFailure(int result, int times, String onceFeature, String palmId, Map<String, Object> map) {
+            // Modo inteligente: não sair em falha; reiniciar coleta automaticamente
             runOnUiThread(() -> {
-                String message = "Falha na coleta";
-                if (PalmConst.COLLECT_RESULT_PALM_EXIST == result) {
-                    message = "Palma já existe";
-                } else if (PalmConst.COLLECT_RESULT_UNKNOWN_ERROR == result) {
-                    message = "Erro desconhecido na coleta";
-                }
-
-                Toast.makeText(CameraCollectActivity.this, message, Toast.LENGTH_SHORT).show();
-                
-                // Fechar a tela após mostrar o erro
+                stableFrames = 0;
+                cancelCountdownIfRunning();
+                isCollecting = true;
+                // Alguns devices param a coleta após erro: reiniciar após pequeno delay
                 findViewById(R.id.rl_container_camera_collect).postDelayed(() -> {
-                    finish();
-                }, 2000);
+                    PalmSdk.getInstance().startCollect(null, null);
+                    updateStatusMessage();
+                }, 300);
             });
         }
     };

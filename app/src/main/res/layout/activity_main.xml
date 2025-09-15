@@ -15,7 +15,25 @@
             android:id="@+id/rl_container_camera"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#00000000" />
+            android:background="#00000000" >
+
+            <ImageView
+                android:id="@+id/img_gabarito_palm_main"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="0dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginBottom="180dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="Gabarito da palma"
+                android:elevation="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/gabarito_palm"
+                android:visibility="visible" />
+        </RelativeLayout>
     </RelativeLayout>
 
     <com.hfims.android.lib.palm.TrackView
@@ -52,19 +70,6 @@
     </LinearLayout>
 
     <!-- Gabarito da palma (imagem redimensionada em dp) -->
-    <ImageView
-        android:id="@+id/img_gabarito_palm_main"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
-        android:adjustViewBounds="true"
-        android:scaleType="centerInside"
-        android:contentDescription="Gabarito da palma"
-        android:src="@drawable/gabarito_palm"
-        android:visibility="visible"
-        android:elevation="8dp" />
 
     <LinearLayout
         android:id="@+id/ll_operate_recognize"
@@ -158,43 +163,49 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/txt_operate_result"
-        android:layout_marginTop="20dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="32dp"
+        android:background="#33B040"
         android:orientation="vertical"
         android:padding="16dp"
-        android:background="#f0f0f0"
         android:visibility="gone">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Usuário Reconhecido:"
+            android:layout_marginBottom="8dp"
+            android:text="ACESSO LIBERADO"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/txt_user_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
             android:text="Nome: -"
-            android:textSize="16sp"
-            android:layout_marginBottom="4dp" />
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/txt_user_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
             android:text="ID: -"
-            android:textSize="16sp"
-            android:layout_marginBottom="4dp" />
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/txt_user_created"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Cadastrado em: -"
-            android:textSize="14sp"
-            android:textColor="#666666" />
+            android:textColor="#666666"
+            android:textSize="14sp" />
 
     </LinearLayout>
 
@@ -301,6 +312,7 @@
         android:letterSpacing="0.1"
         android:padding="10dp"
         android:text=""
+        android:visibility="invisible"
         android:textColor="#ffffff"
         android:textSize="24sp" />
 
