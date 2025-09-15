@@ -54,14 +54,6 @@
         android:layout_marginBottom="16dp" />
 
     <Button
-        android:id="@+id/btn_stop_collect"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Parar Coleta"
-        android:layout_marginBottom="16dp"
-        android:enabled="false" />
-
-    <Button
         android:id="@+id/btn_save"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -83,11 +75,5 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Voltar para Reconhecimento" />
-
-    <RelativeLayout
-        android:id="@+id/rl_container_camera_register"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#00000000" />
 
 </LinearLayout>

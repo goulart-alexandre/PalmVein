@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Container da câmera -->
+    <RelativeLayout
+        android:id="@+id/rl_container_camera_collect"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000" />
+
+    <!-- Overlay com instruções -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:background="#80000000">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Coleta da Palma"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Posicione a palma da mão na câmera e mantenha até a coleta ser concluída"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mantenha a mão estável e bem iluminada"
+            android:textSize="14sp"
+            android:textColor="#CCCCCC"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+    <!-- Botão de cancelar -->
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dp"
+        android:text="Cancelar"
+        android:textColor="#FFFFFF"
+        android:background="#80FF0000"
+        android:padding="16dp" />
+
+</RelativeLayout>
