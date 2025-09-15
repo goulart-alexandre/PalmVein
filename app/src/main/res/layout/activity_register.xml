@@ -46,6 +46,8 @@
         android:textColor="#666666"
         android:layout_marginBottom="16dp" />
 
+    <!-- Gabarito da palma (imagem redimensionada em dp) -->
+
     <Button
         android:id="@+id/btn_start_collect"
         android:layout_width="match_parent"

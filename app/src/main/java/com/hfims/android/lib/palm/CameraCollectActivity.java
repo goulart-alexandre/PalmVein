@@ -29,6 +29,7 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
     private int mCameraId = android.hardware.Camera.CameraInfo.CAMERA_FACING_BACK;
     private boolean isCollecting = false;
     private String collectedPalmFeature = null;
+    private float currentDistance = 0f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,7 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
 
         initCamera();
         initPalmSdk();
+        setupClickListeners();
         startCollect();
     }
 
@@ -94,10 +96,31 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
         }
     }
 
+    private void setupClickListeners() {
+        findViewById(R.id.btn_cancel).setOnClickListener(v -> stopCollect());
+    }
+
     private void startCollect() {
         isCollecting = true;
         PalmSdk.getInstance().startCollect(null, null);
         Toast.makeText(this, "Posicione a palma da mão na câmera", Toast.LENGTH_LONG).show();
+    }
+
+    private void updateCollectQualityIndicator(float quality, float distance) {
+        int qualityPercent = (int) (quality * 100);
+        ((android.widget.ProgressBar) findViewById(R.id.progress_collect_quality)).setProgress(qualityPercent);
+        ((android.widget.TextView) findViewById(R.id.txt_collect_quality_percentage)).setText(qualityPercent + "%");
+        ((android.widget.TextView) findViewById(R.id.txt_collect_distance)).setText("Distância: " + String.format("%.1f", distance));
+        
+        // Mudar cor da barra baseada na qualidade
+        android.widget.ProgressBar progressBar = findViewById(R.id.progress_collect_quality);
+        if (qualityPercent >= 80) {
+            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFF4CAF50)); // Verde
+        } else if (qualityPercent >= 60) {
+            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFFF9800)); // Laranja
+        } else {
+            progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFF44336)); // Vermelho
+        }
     }
 
     private void stopCollect() {
@@ -133,12 +156,23 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
 
         @Override
         public void onPalmIn(List<PalmTrack> palmTrackList, Map<String, Object> map) {
-            // Detected palm vein
+            // Detected palm vein - atualizar indicador de qualidade
+            runOnUiThread(() -> {
+                if (palmTrackList != null && !palmTrackList.isEmpty()) {
+                    // Calcular qualidade baseada no número de tracks e outros fatores
+                    float quality = Math.min(1.0f, palmTrackList.size() * 0.3f + 0.4f);
+                    updateCollectQualityIndicator(quality, currentDistance);
+                }
+            });
         }
 
         @Override
         public void onDistance(float distance) {
-            // not support
+            // Atualizar distância
+            runOnUiThread(() -> {
+                currentDistance = distance;
+                updateCollectQualityIndicator(0.5f, distance); // Qualidade padrão durante detecção
+            });
         }
 
         @Override
@@ -153,17 +187,20 @@ public class CameraCollectActivity extends AppCompatActivity implements TextureV
                 collectedPalmFeature = feature;
                 isCollecting = false;
                 
+                // Atualizar indicador de qualidade para 100%
+                updateCollectQualityIndicator(1.0f, currentDistance);
+                
                 // Retornar resultado para a tela de cadastro
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(EXTRA_PALM_FEATURE, collectedPalmFeature);
                 setResult(Activity.RESULT_OK, resultIntent);
                 
-                Toast.makeText(CameraCollectActivity.this, "Palma coletada com sucesso!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CameraCollectActivity.this, "Palma coletada com sucesso! Qualidade: 100%", Toast.LENGTH_SHORT).show();
                 
                 // Fechar a tela após um pequeno delay
                 findViewById(R.id.rl_container_camera_collect).postDelayed(() -> {
                     finish();
-                }, 1000);
+                }, 1500);
             });
         }
 

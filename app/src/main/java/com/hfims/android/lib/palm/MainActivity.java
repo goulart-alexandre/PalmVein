@@ -53,6 +53,14 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     private UserDao userDao;
     private QZhengGPIOManager gpioManager;
     private Handler ledHandler = new Handler(Looper.getMainLooper());
+    
+    // Variáveis para funcionalidades avançadas
+    private boolean isQualityVisible = false;
+    private boolean isSettingsVisible = false;
+    private int currentThreshold = 65;
+    private float currentQuality = 0f;
+    private float currentDistance = 0f;
+    private boolean isMenuVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +81,8 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         // Recarregar usuários do banco SQLite para o SDK quando voltar de outras telas
         if (PalmSdk.getInstance() != null) {
             loadUsersToSdk();
-            startRecognize();
+            // Iniciar reconhecimento automaticamente após 300ms
+            binding.rlContainerCamera.postDelayed(() -> startRecognize(), 300);
         }
     }
 
@@ -166,8 +175,8 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
 
     private void setupClickListeners() {
         binding.btnStartCollect.setOnClickListener(v -> {
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, "collect for 1111", Toast.LENGTH_SHORT).show());
-            PalmSdk.getInstance().startCollect(null, null);
+        runOnUiThread(() -> Toast.makeText(MainActivity.this, "collect for 1111", Toast.LENGTH_SHORT).show());
+        PalmSdk.getInstance().startCollect(null, null);
         });
 
         binding.btnStopCollect.setOnClickListener(v -> {
@@ -201,6 +210,43 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
             }
             Toast.makeText(this, "Usuários no banco: " + users.size(), Toast.LENGTH_SHORT).show();
         });
+
+        // Controles avançados
+        binding.btnToggleQuality.setOnClickListener(v -> toggleQualityIndicator());
+        binding.btnToggleSettings.setOnClickListener(v -> toggleAdvancedSettings());
+
+        // Botão hambúrguer para alternar menu
+        binding.btnHamburger.setOnClickListener(v -> toggleMenu());
+        
+        // SeekBar para threshold dinâmico
+        binding.seekbarThreshold.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    currentThreshold = progress;
+                    binding.txtThresholdValue.setText(String.valueOf(progress));
+                    updateThreshold(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+        });
+    }
+
+    private void toggleMenu() {
+        isMenuVisible = !isMenuVisible;
+        int vis = isMenuVisible ? View.VISIBLE : View.GONE;
+        binding.llOperateCollect.setVisibility(vis);
+        binding.llOperateRecognize.setVisibility(vis);
+        binding.llOperateClear.setVisibility(vis);
+        binding.llAdvancedControls.setVisibility(vis);
+        // manter gabarito sempre visível sobre a câmera
+        binding.imgGabaritoPalmMain.setVisibility(View.VISIBLE);
+        binding.txtOperateResult.setVisibility(View.GONE); // manter oculto
     }
 
     public void startRecognize() {
@@ -300,6 +346,67 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         }
     }
 
+    // Métodos para funcionalidades avançadas
+    private void toggleQualityIndicator() {
+        isQualityVisible = !isQualityVisible;
+        binding.llQualityIndicator.setVisibility(isQualityVisible ? View.VISIBLE : View.GONE);
+        binding.btnToggleQuality.setText(isQualityVisible ? "Ocultar Qualidade" : "Mostrar Qualidade");
+    }
+
+    private void toggleAdvancedSettings() {
+        isSettingsVisible = !isSettingsVisible;
+        binding.llAdvancedSettings.setVisibility(isSettingsVisible ? View.VISIBLE : View.GONE);
+        binding.btnToggleSettings.setText(isSettingsVisible ? "Ocultar Config" : "Configurações");
+    }
+
+    private void updateThreshold(int newThreshold) {
+        // Atualizar threshold dinamicamente
+        PalmConfig newConfig = new PalmConfig.Builder()
+                .recognizeThreshold(newThreshold)
+                .customId(CUSTOM_ID)
+                .build();
+        
+        // Reinicializar SDK com novo threshold
+        PalmSdk.getInstance().init(this, newConfig, (success, errorCode, message) -> {
+            if (success) {
+                android.util.Log.d("PalmConfig", "Threshold atualizado para: " + newThreshold);
+                Toast.makeText(this, "Threshold atualizado: " + newThreshold, Toast.LENGTH_SHORT).show();
+            } else {
+                android.util.Log.e("PalmConfig", "Erro ao atualizar threshold: " + message);
+            }
+        });
+    }
+
+    private void updateQualityIndicator(float quality, float distance) {
+        if (isQualityVisible) {
+            currentQuality = quality;
+            currentDistance = distance;
+            
+            int qualityPercent = (int) (quality * 100);
+            binding.progressQuality.setProgress(qualityPercent);
+            binding.txtQualityPercentage.setText(qualityPercent + "%");
+            binding.txtDistance.setText("Distância: " + String.format("%.1f", distance));
+            
+            // Mudar cor da barra baseada na qualidade
+            if (qualityPercent >= 80) {
+                binding.progressQuality.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFF4CAF50)); // Verde
+            } else if (qualityPercent >= 60) {
+                binding.progressQuality.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFFF9800)); // Laranja
+            } else {
+                binding.progressQuality.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFFF44336)); // Vermelho
+            }
+        }
+    }
+
+    private void showTrackingInfo(List<TFaceTrack> faceTrackList) {
+        if (faceTrackList != null && !faceTrackList.isEmpty()) {
+            TFaceTrack track = faceTrackList.get(0);
+            android.util.Log.d("PalmTracking", "Tracking - Centro: " + track.getCenter() + 
+                             ", Raio: " + track.getRadius() + 
+                             ", Retângulo: " + track.getRect());
+        }
+    }
+
     private final IPalmSdk.CollectCallback collectCallback = new IPalmSdk.CollectCallback() {
 
         @Override
@@ -309,12 +416,25 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
 
         @Override
         public void onPalmIn(List<PalmTrack> palmTrackList, Map<String, Object> map) {
-            // Detected palm vein
+            // Detected palm vein - atualizar indicador de qualidade
+            runOnUiThread(() -> {
+                if (palmTrackList != null && !palmTrackList.isEmpty()) {
+                    // Calcular qualidade baseada no número de tracks e outros fatores
+                    float quality = Math.min(1.0f, palmTrackList.size() * 0.3f + 0.4f);
+                    updateQualityIndicator(quality, currentDistance);
+                }
+            });
         }
 
         @Override
         public void onDistance(float distance) {
-            // not support
+            // Atualizar distância
+            runOnUiThread(() -> {
+                currentDistance = distance;
+                if (isQualityVisible) {
+                    binding.txtDistance.setText("Distância: " + String.format("%.1f", distance));
+                }
+            });
         }
 
         @Override
@@ -363,12 +483,27 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
                 faceTrack.setRadius(palmTrack.getRadius());
                 faceTrackList.add(faceTrack);
             }
-            runOnUiThread(() -> showPalmTrackView(faceTrackList));
+            runOnUiThread(() -> {
+                showPalmTrackView(faceTrackList);
+                showTrackingInfo(faceTrackList);
+                
+                // Atualizar indicador de qualidade durante reconhecimento
+                if (list != null && !list.isEmpty()) {
+                    float quality = Math.min(1.0f, list.size() * 0.2f + 0.6f);
+                    updateQualityIndicator(quality, currentDistance);
+                }
+            });
         }
 
         @Override
         public void onDistance(float distance) {
-            // not support
+            // Atualizar distância durante reconhecimento
+            runOnUiThread(() -> {
+                currentDistance = distance;
+                if (isQualityVisible) {
+                    binding.txtDistance.setText("Distância: " + String.format("%.1f", distance));
+                }
+            });
         }
 
         @Override
@@ -382,13 +517,17 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
             runOnUiThread(() -> {
                 android.util.Log.d("PalmRecognition", "Reconhecimento bem-sucedido! palmId: " + palmId + ", score: " + score);
                 
+                // Atualizar indicador de qualidade com score
+                float quality = Math.min(1.0f, score / 100.0f);
+                updateQualityIndicator(quality, currentDistance);
+                
                 // Buscar usuário no banco de dados pelo userId (palmId é o userId que salvamos)
                 User recognizedUser = userDao.getUserById(palmId);
                 android.util.Log.d("PalmRecognition", "Usuário encontrado: " + (recognizedUser != null ? recognizedUser.getName() : "null"));
                 
                   if (recognizedUser != null) {
                       showUserInfo(recognizedUser);
-                      Toast.makeText(MainActivity.this, "Usuário reconhecido: " + recognizedUser.getName(), Toast.LENGTH_LONG).show();
+                      Toast.makeText(MainActivity.this, "Usuário reconhecido: " + recognizedUser.getName() + " (Score: " + score + ")", Toast.LENGTH_LONG).show();
 
                       // Ligar LED verde quando reconhecer
                       turnOnGreenLED();

@@ -1,65 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
     <!-- Container da câmera -->
+
+    <!-- Gabarito fora do container da câmera para ficar sempre acima -->
+
+    <!-- Overlay com instruções e gabarito (sobre a câmera) -->
+
+    <!-- Botão de cancelar -->
     <RelativeLayout
         android:id="@+id/rl_container_camera_collect"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000" />
+        android:background="#000000">
 
-    <!-- Overlay com instruções -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:orientation="vertical"
-        android:padding="20dp"
-        android:background="#80000000">
-
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Coleta da Palma"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
+            android:layout_alignParentBottom="true"
+            android:layout_marginTop="565dp"
+            android:layout_marginBottom="80dp"
+            android:background="#80000000"
+            android:elevation="8dp"
+            android:orientation="vertical"
+            android:padding="0dp">
 
-        <TextView
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Coleta da Palma"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <!-- Gabarito da palma centralizado, 80dp de margem lateral -->
+
+            <!-- Indicador de Qualidade para Coleta -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#40000000"
+                android:orientation="vertical"
+                android:padding="0dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center"
+                    android:text="Qualidade da Coleta"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
+                <ProgressBar
+                    android:id="@+id/progress_collect_quality"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressTint="#4CAF50" />
+
+                <TextView
+                    android:id="@+id/txt_collect_quality_percentage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="0%"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/txt_collect_distance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="Distância: --"
+                    android:textColor="#CCCCCC"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/img_gabarito_palm_collect"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Posicione a palma da mão na câmera e mantenha até a coleta ser concluída"
-            android:textSize="16sp"
-            android:textColor="#FFFFFF"
-            android:gravity="center"
-            android:layout_marginBottom="8dp" />
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="200dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="Gabarito da palma"
+            android:elevation="16dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/gabarito_palm" />
+    </RelativeLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Mantenha a mão estável e bem iluminada"
-            android:textSize="14sp"
-            android:textColor="#CCCCCC"
-            android:gravity="center" />
-
-    </LinearLayout>
-
-    <!-- Botão de cancelar -->
     <Button
         android:id="@+id/btn_cancel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="20dp"
         android:text="Cancelar"
         android:textColor="#FFFFFF"
         android:background="#80FF0000"
-        android:padding="16dp" />
+        android:padding="10dp" />
 
 </RelativeLayout>
