@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">hf-sdk-palm</string>
+    <string name="activity_main_palm_vein_unauth">掌静脉算法未授权，deviceKey=</string>
+    <string name="activity_main_palm_vein_init_failed">掌静脉初始化失败</string>
+    <string name="activity_main_palm_collect_success">采集成功</string>
+    <string name="activity_main_palm_already_exists">掌静脉已存在</string>
+    <string name="activity_main_palm_collect_failed">采集失败</string>
+    <string name="activity_main_palm_recognition_success">"掌静脉识别成功 "</string>
+    <string name="activity_main_palm_recognition_failed">掌静脉识别失败</string>
+</resources>

@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">hf-sdk-palm</string>
+    <string name="activity_main_palm_vein_unauth">The palm vein algorithm is not authorized, deviceKey=</string>
+    <string name="activity_main_palm_vein_init_failed">Palm vein initialization failed</string>
+    <string name="activity_main_palm_collect_success">Collection successful</string>
+    <string name="activity_main_palm_already_exists">Palm vein already exists</string>
+    <string name="activity_main_palm_collect_failed">Collection failed</string>
+    <string name="activity_main_palm_recognition_success">Palm vein recognition successful</string>
+    <string name="activity_main_palm_recognition_failed">Palm vein recognition failed</string>
+</resources>

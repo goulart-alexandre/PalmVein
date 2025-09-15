@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.hfims.android.lib.palm.MainActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 摄像头预览容器 -->
+        <RelativeLayout
+            android:id="@+id/rl_container_camera"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#00000000" />
+    </RelativeLayout>
+
+    <com.hfims.android.lib.palm.TrackView
+        android:id="@+id/palm_track_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/ll_operate_collect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp">
+
+        <Button
+            android:id="@+id/btn_start_collect"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="start collect" />
+
+        <Button
+            android:id="@+id/btn_stop_collect"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="20dp"
+            android:text="stop collect" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_operate_recognize"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ll_operate_collect"
+        android:layout_marginStart="20dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_start_recognize"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="start recognize" />
+
+        <Button
+            android:id="@+id/btn_stop_recognize"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="stop recognize" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_operate_clear"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ll_operate_recognize"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <Button
+            android:id="@+id/btn_clear_collect"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:text="clear collect" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txt_operate_result"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ll_operate_clear"
+        android:layout_marginTop="20dp"
+        android:padding="20dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:textColor="#000000"
+        android:textSize="28sp" />
+
+    <TextView
+        android:id="@+id/txt_device_key"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:background="#88000000"
+        android:letterSpacing="0.1"
+        android:padding="10dp"
+        android:text=""
+        android:textColor="#ffffff"
+        android:textSize="24sp" />
+</RelativeLayout>
