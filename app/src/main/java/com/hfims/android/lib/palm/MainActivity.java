@@ -68,6 +68,11 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Ocultar ActionBar por padrão
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
         userDao = new UserDao(this);
         gpioManager = QZhengGPIOManager.getInstance(this);
         setupClickListeners();
@@ -253,10 +258,25 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     private void toggleMenu() {
         isMenuVisible = !isMenuVisible;
         int vis = isMenuVisible ? View.VISIBLE : View.GONE;
+        
+        // Controlar visibilidade dos menus
         binding.llOperateCollect.setVisibility(vis);
         binding.llOperateRecognize.setVisibility(vis);
         binding.llOperateClear.setVisibility(vis);
         binding.llAdvancedControls.setVisibility(vis);
+        
+        // Controlar ActionBar (barra roxa com "hf-sdk-palm")
+        if (getSupportActionBar() != null) {
+            if (isMenuVisible) {
+                getSupportActionBar().show();
+            } else {
+                getSupportActionBar().hide();
+            }
+        }
+        
+        // Controlar visibilidade do SN (Device Key)
+        binding.txtDeviceKey.setVisibility(vis);
+        
         // manter gabarito sempre visível sobre a câmera
         binding.imgGabaritoPalmMain.setVisibility(View.VISIBLE);
         binding.txtOperateResult.setVisibility(View.GONE); // manter oculto
@@ -322,13 +342,10 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         binding.palmTrackView.setVisibility(View.GONE);
     }
 
-    private void showUserInfo(User user) {
+    private void showUserInfo(User user, int score) {
         binding.txtUserName.setText("Nome: " + user.getName());
         binding.txtUserId.setText("ID: " + user.getUserId());
-        
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        String dateStr = sdf.format(new Date(user.getCreatedAt()));
-        binding.txtUserCreated.setText("Cadastrado em: " + dateStr);
+        binding.txtUserScore.setText("Score: " + score);
         
         binding.llUserInfo.setVisibility(View.VISIBLE);
     }
@@ -543,8 +560,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
                 android.util.Log.d("PalmRecognition", "Usuário encontrado: " + (recognizedUser != null ? recognizedUser.getName() : "null"));
                 
                   if (recognizedUser != null) {
-                      showUserInfo(recognizedUser);
-                      Toast.makeText(MainActivity.this, "Usuário reconhecido: " + recognizedUser.getName() + " (Score: " + score + ")", Toast.LENGTH_LONG).show();
+                      showUserInfo(recognizedUser, score);
 
                       // Ligar LED verde e tocar som quando reconhecer
                       turnOnGreenLED();

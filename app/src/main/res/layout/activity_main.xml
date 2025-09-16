@@ -23,15 +23,16 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentBottom="true"
-                android:layout_marginStart="20dp"
+                android:layout_marginStart="-80dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginEnd="20dp"
+                android:layout_marginEnd="-10dp"
                 android:layout_marginBottom="180dp"
                 android:adjustViewBounds="true"
                 android:contentDescription="Gabarito da palma"
                 android:elevation="8dp"
                 android:scaleType="centerInside"
-                android:src="@drawable/gabarito_palm"
+                android:alpha="0.6"
+                android:src="@drawable/gabarito_palm3"
                 android:visibility="visible" />
         </RelativeLayout>
     </RelativeLayout>
@@ -170,16 +171,17 @@
         android:layout_marginTop="0dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="32dp"
-        android:background="#f0f0f0"
+        android:background="#BF009800"
         android:orientation="vertical"
         android:padding="16dp"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="ACESSO LIBERADO"
+            android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -187,6 +189,7 @@
             android:id="@+id/txt_user_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
             android:layout_marginBottom="4dp"
             android:text="Nome: -"
             android:textSize="16sp" />
@@ -196,15 +199,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
+            android:textColor="#FFFFFF"
             android:text="ID: -"
             android:textSize="16sp" />
 
         <TextView
-            android:id="@+id/txt_user_created"
+            android:id="@+id/txt_user_score"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cadastrado em: -"
-            android:textColor="#666666"
+            android:text="Score: -"
+            android:textColor="#FFFFFF"
             android:textSize="14sp" />
 
     </LinearLayout>
@@ -313,7 +317,8 @@
         android:padding="10dp"
         android:text=""
         android:textColor="#ffffff"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:visibility="gone" />
 
     <!-- Botão hambúrguer para alternar o menu -->
     <ImageButton
