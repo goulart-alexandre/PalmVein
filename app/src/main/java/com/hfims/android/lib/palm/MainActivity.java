@@ -2,6 +2,7 @@ package com.hfims.android.lib.palm;
 
 import android.graphics.Bitmap;
 import android.hardware.Camera;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,14 +54,13 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     private UserDao userDao;
     private QZhengGPIOManager gpioManager;
     private Handler ledHandler = new Handler(Looper.getMainLooper());
+    private MediaPlayer successSound;
     
     // Variáveis para funcionalidades avançadas
-    private boolean isQualityVisible = false;
-    private boolean isSettingsVisible = false;
+    private boolean isMenuVisible = false;
     private int currentThreshold = 65;
     private float currentQuality = 0f;
     private float currentDistance = 0f;
-    private boolean isMenuVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +80,9 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         initCamera();
         // Recarregar usuários do banco SQLite para o SDK quando voltar de outras telas
         if (PalmSdk.getInstance() != null) {
+            // Re-adicionar callbacks que foram removidos no onPause
+            PalmSdk.getInstance().addCollectCallback(collectCallback);
+            PalmSdk.getInstance().addRecognizeCallback(recognizeCallback);
             loadUsersToSdk();
             // Iniciar reconhecimento automaticamente após 300ms
             binding.rlContainerCamera.postDelayed(() -> startRecognize(), 300);
@@ -90,6 +93,11 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     protected void onPause() {
         super.onPause();
         closeCamera();
+        // Remover callbacks para evitar conflito com CameraCollectActivity
+        if (PalmSdk.getInstance() != null) {
+            PalmSdk.getInstance().removeCollectCallback(collectCallback);
+            PalmSdk.getInstance().removeRecognizeCallback(recognizeCallback);
+        }
     }
 
     @Override
@@ -97,6 +105,13 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         super.onDestroy();
         releasePalmSdk();
         resetAllLEDs(); // Resetar todos os LEDs ao destruir a activity
+        
+        // Limpar MediaPlayer
+        if (successSound != null) {
+            successSound.release();
+            successSound = null;
+        }
+        
         if (userDao != null) {
             userDao.close();
         }
@@ -212,9 +227,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         });
 
         // Controles avançados
-        binding.btnToggleQuality.setOnClickListener(v -> toggleQualityIndicator());
-        binding.btnToggleSettings.setOnClickListener(v -> toggleAdvancedSettings());
-
+        
         // Botão hambúrguer para alternar menu
         binding.btnHamburger.setOnClickListener(v -> toggleMenu());
         
@@ -346,18 +359,22 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         }
     }
 
-    // Métodos para funcionalidades avançadas
-    private void toggleQualityIndicator() {
-        isQualityVisible = !isQualityVisible;
-        binding.llQualityIndicator.setVisibility(isQualityVisible ? View.VISIBLE : View.GONE);
-        binding.btnToggleQuality.setText(isQualityVisible ? "Ocultar Qualidade" : "Mostrar Qualidade");
+    private void playSuccessSound() {
+        try {
+            if (successSound != null) {
+                successSound.release();
+            }
+            successSound = MediaPlayer.create(this, R.raw.finger_lendo);
+            if (successSound != null) {
+                successSound.start();
+                android.util.Log.d("PalmSound", "Som de sucesso tocado");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("PalmSound", "Erro ao tocar som de sucesso: " + e.getMessage());
+        }
     }
 
-    private void toggleAdvancedSettings() {
-        isSettingsVisible = !isSettingsVisible;
-        binding.llAdvancedSettings.setVisibility(isSettingsVisible ? View.VISIBLE : View.GONE);
-        binding.btnToggleSettings.setText(isSettingsVisible ? "Ocultar Config" : "Configurações");
-    }
+    // Métodos para funcionalidades avançadas
 
     private void updateThreshold(int newThreshold) {
         // Atualizar threshold dinamicamente
@@ -378,7 +395,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
     }
 
     private void updateQualityIndicator(float quality, float distance) {
-        if (isQualityVisible) {
+        if (true) { // Sempre mostrar qualidade
             currentQuality = quality;
             currentDistance = distance;
             
@@ -431,7 +448,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
             // Atualizar distância
             runOnUiThread(() -> {
                 currentDistance = distance;
-                if (isQualityVisible) {
+                if (true) { // Sempre mostrar qualidade
                     binding.txtDistance.setText("Distância: " + String.format("%.1f", distance));
                 }
             });
@@ -460,7 +477,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
             }
             if (PalmConst.COLLECT_RESULT_UNKNOWN_ERROR == result) {
                 // Collection failed
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, getString(R.string.activity_main_palm_collect_failed), Toast.LENGTH_SHORT).show());
+                // Removido toast de erro - coleta falhou silenciosamente
             }
         }
     };
@@ -500,7 +517,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
             // Atualizar distância durante reconhecimento
             runOnUiThread(() -> {
                 currentDistance = distance;
-                if (isQualityVisible) {
+                if (true) { // Sempre mostrar qualidade
                     binding.txtDistance.setText("Distância: " + String.format("%.1f", distance));
                 }
             });
@@ -529,8 +546,9 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
                       showUserInfo(recognizedUser);
                       Toast.makeText(MainActivity.this, "Usuário reconhecido: " + recognizedUser.getName() + " (Score: " + score + ")", Toast.LENGTH_LONG).show();
 
-                      // Ligar LED verde quando reconhecer
+                      // Ligar LED verde e tocar som quando reconhecer
                       turnOnGreenLED();
+                      playSuccessSound();
 
                       // Esconder informações do usuário após 3 segundos e desligar LED
                       binding.llUserInfo.postDelayed(() -> {
@@ -548,7 +566,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
         @Override
         public void onFailure(int result, int score, Map<String, Object> map) {
             // Palm vein recognition failed
-            runOnUiThread(() -> Toast.makeText(MainActivity.this, getString(R.string.activity_main_palm_recognition_failed), Toast.LENGTH_SHORT).show());
+            // Removido toast de erro - reconhecimento falhou silenciosamente
             runOnUiThread(() -> hidePalmTrackView());
             binding.rlContainerCamera.postDelayed(() -> startRecognize(), 2000);
         }
@@ -578,7 +596,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.OnCam
                             // If permanently rejected, redirect to the application permission system settings page
                             XXPermissions.startPermissionActivity(MainActivity.this, permissions);
                         } else {
-                            Toast.makeText(MainActivity.this, "Permission failed", Toast.LENGTH_LONG).show();
+                            // Permissão negada - não mostrar toast
                         }
                     }
                 });

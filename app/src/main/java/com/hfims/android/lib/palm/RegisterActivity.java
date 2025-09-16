@@ -93,7 +93,7 @@ public class RegisterActivity extends AppCompatActivity {
             Toast.makeText(this, "Usuário " + name + " cadastrado com sucesso!", Toast.LENGTH_SHORT).show();
             finish(); // Volta para a MainActivity
         } else {
-            Toast.makeText(this, "Erro ao cadastrar usuário. O ID do usuário pode já existir.", Toast.LENGTH_LONG).show();
+            // Erro ao cadastrar - não mostrar toast
         }
     }
 
@@ -138,7 +138,7 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(this, "Palma coletada com sucesso!", Toast.LENGTH_SHORT).show();
                 } else {
                     binding.tvCollectStatus.setText("Falha na coleta da palma");
-                    Toast.makeText(this, "Falha na coleta da palma", Toast.LENGTH_SHORT).show();
+                    // Falha na coleta - não mostrar toast
                 }
             } else {
                 binding.tvCollectStatus.setText("Coleta cancelada");

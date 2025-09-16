@@ -170,7 +170,7 @@
         android:layout_marginTop="0dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="32dp"
-        android:background="#33B040"
+        android:background="#f0f0f0"
         android:orientation="vertical"
         android:padding="16dp"
         android:visibility="gone">
@@ -312,7 +312,6 @@
         android:letterSpacing="0.1"
         android:padding="10dp"
         android:text=""
-        android:visibility="invisible"
         android:textColor="#ffffff"
         android:textSize="24sp" />
 
